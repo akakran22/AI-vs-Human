@@ -223,13 +223,13 @@ pip install --upgrade numpy==2.0.0 scikit-learn==1.5.2
 ## 📸 Screenshots
 
 ### Single Prediction
-![Single Prediction](images/single prediction.png)
+![Single Prediction](Images/single prediction.png)
 
 ### Batch Processing
-![Batch Processing](images/batch prediction.png)
+![Batch Processing](Images/batch prediction.png)
 
 ### LIME Explanations
-![LIME Explanations](images/LIME explanations.png)
+![LIME Explanations](Images/LIME Explainability.png)
 
 ---
 
