@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Single Prediction - AI vs Human Classifier{% endblock %}
+
+{% block content %}
+<style>
+    .prediction-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .char-counter {
+        text-align: right;
+        color: #6c757d;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+</style>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="prediction-form">
+    <h2 style="margin-bottom: 30px; color: #333;">Enter Text for Classification</h2>
+    
+    <form method="POST" action="{{ url_for('predict') }}">
+        <div class="form-group">
+            <label for="text">Text to Classify</label>
+            <textarea 
+                name="text" 
+                id="text" 
+                rows="12" 
+                placeholder="Enter or paste the text you want to classify as AI-generated or human-written..."
+                required></textarea>
+            <div class="char-counter">
+                <span id="charCount">0</span> characters
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="model">Select Model</label>
+            <select name="model" id="model">
+                <option value="lgbm">LightGBM (92% Accuracy) - Recommended</option>
+                <option value="logreg">Logistic Regression (90% Accuracy)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Classify Text</button>
+    </form>
+</div>
+
+<script>
+    const textarea = document.getElementById('text');
+    const charCount = document.getElementById('charCount');
+    
+    textarea.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+    });
+</script>
+{% endblock %}
