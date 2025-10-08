@@ -4,6 +4,7 @@ A production-ready Flask web application for classifying text as AI-generated or
 
 > **Note**: This repository contains only the Flask web application. For model training code and dataset, please visit the [AI vs Human Classification Models Repository](link-to-models-repo).
 
+[Live Application Link](https://ai-vs-human-qqla.onrender.com)
 
 ## 📋 Overview
 
