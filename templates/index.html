@@ -1,37 +1,137 @@
 {% extends "base.html" %}
 
-{% block title %}Single Prediction - AI vs Human Classifier{% endblock %}
+{% block title %}AI Content Detector{% endblock %}
 
 {% block content %}
 <style>
-    .prediction-form {
-        max-width: 800px;
+    .hero {
+        text-align: center;
+        padding: 4rem 0 3rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .hero h1 {
+        font-size: 4rem;
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero p {
+        font-size: 1.5rem;
+        color: var(--gray);
+        max-width: 700px;
+        margin: 0 auto 3rem;
+    }
+
+    .detector-card {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 2rem;
+        padding: 3rem;
+        max-width: 1000px;
         margin: 0 auto;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
     }
 
     .char-counter {
         text-align: right;
-        color: #6c757d;
-        font-size: 0.9em;
-        margin-top: 5px;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 4rem;
+    }
+
+    .feature {
+        text-align: center;
+        padding: 2rem;
+        background: rgba(30, 41, 59, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        transition: all 0.3s;
+    }
+
+    .feature:hover {
+        background: rgba(30, 41, 59, 0.5);
+        transform: translateY(-5px);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .feature p {
+        color: var(--gray);
+        font-size: 0.9rem;
+    }
+
+    .submit-section {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+        }
+
+        .detector-card {
+            padding: 2rem;
+        }
     }
 </style>
 
 {% if error %}
-<div class="alert alert-error">{{ error }}</div>
+<div class="alert alert-error">⚠️ {{ error }}</div>
 {% endif %}
 
-<div class="prediction-form">
-    <h2 style="margin-bottom: 30px; color: #333;">Enter Text for Classification</h2>
-    
-    <form method="POST" action="{{ url_for('predict') }}">
+<div class="hero">
+    <h1>Detect AI-Generated Content</h1>
+    <p>Advanced machine learning to identify AI-written text with high accuracy</p>
+</div>
+
+<form method="POST" action="{{ url_for('predict') }}">
+    <div class="detector-card">
         <div class="form-group">
-            <label for="text">Text to Classify</label>
+            <label for="text">📝 Paste Your Text</label>
             <textarea 
                 name="text" 
                 id="text" 
                 rows="12" 
-                placeholder="Enter or paste the text you want to classify as AI-generated or human-written..."
+                placeholder="Please Enter or Paste Text."
                 required></textarea>
             <div class="char-counter">
                 <span id="charCount">0</span> characters
@@ -39,15 +139,42 @@
         </div>
 
         <div class="form-group">
-            <label for="model">Select Model</label>
+            <label for="model">🤖 Model Selection</label>
             <select name="model" id="model">
-                <option value="lgbm">LightGBM (92% Accuracy) - Recommended</option>
-                <option value="logreg">Logistic Regression (90% Accuracy)</option>
+                <option value="lgbm">LightGBM</option>
+                <option value="logreg">Logistic Regression</option>
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Classify Text</button>
-    </form>
+        <div class="submit-section">
+            <button type="submit" class="btn btn-primary">
+                <span>🚀 Analyze Text</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="features">
+    <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Results</h3>
+        <p>Get results in seconds</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">🎯</div>
+        <h3>92% Accuracy</h3>
+        <p>Industry-leading precision</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3>LIME Analysis</h3>
+        <p>See why each word matters</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>Visual Reports</h3>
+        <p>Beautiful, clear insights</p>
+    </div>
 </div>
 
 <script>
