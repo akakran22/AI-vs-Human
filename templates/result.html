@@ -1,293 +1,401 @@
 {% extends "base.html" %}
 
-{% block title %}Prediction Result - AI vs Human Classifier{% endblock %}
+{% block title %}Detection Results{% endblock %}
 
 {% block content %}
 <style>
-    .result-container {
-        max-width: 900px;
-        margin: 0 auto;
+    /* --- Hero layout --- */
+    .results-hero {
+        text-align: center;
+        padding: 2rem 0 3rem;
+        animation: fadeInUp 0.8s ease;
     }
 
-    .result-card {
-        background: #f8f9fa;
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 30px;
-        border: 2px solid #e9ecef;
+    @keyframes fadeInUp {
+        from { transform: translateY(10px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
     }
 
-    .result-header {
+    /* --- Unified pill row (two chips: prediction + confidence) --- */
+    .badge-row {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        margin-bottom: 20px;
+        gap: 1rem;              /* even spacing between pills */
+        flex-wrap: wrap;        /* wrap on small screens */
+        margin-bottom: 1.5rem;
+    }
+
+    /* Base chip style reused for both pills */
+    .model-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(99, 102, 241, 0.5);
+        border-radius: 2rem;
+        color: var(--primary);
+        font-weight: 700;
+        letter-spacing: 0.2px;
+
+        /* Equal size for both pills */
+        height: 48px;
+        min-width: 260px;
+        text-align: center;
+        white-space: nowrap;
+
+        /* Smooth hover/elevation */
+        transition: transform .2s ease, box-shadow .2s ease,
+                    background .2s ease, border-color .2s ease;
+    }
+
+    /* Hover state */
+    .model-tag:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(99,102,241,.25);
+        background: rgba(99, 102, 241, 0.3);
+        border-color: rgba(99, 102, 241, 0.8);
+    }
+
+    /* Keep other components as-is */
+    .card {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 2rem;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .card-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .highlighted-text {
+        background: rgba(15, 23, 42, 0.5);
+        padding: 2rem;
+        border-radius: 1rem;
+        line-height: 2;
+        font-size: 1.1rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .legend {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
         flex-wrap: wrap;
-        gap: 15px;
     }
 
-    .prediction-badge {
-        padding: 15px 30px;
-        border-radius: 10px;
-        font-size: 1.3em;
-        font-weight: bold;
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
     }
 
-    .badge-ai {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
+    .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 0.25rem;
     }
 
-    .badge-human {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
+    /* Probability bars */
+    .prob-container {
+        display: grid;
+        gap: 1.5rem;
+        margin-top: 2rem;
     }
 
-    .confidence-badge {
-        padding: 10px 20px;
-        background: #667eea;
-        color: white;
-        border-radius: 8px;
-        font-size: 1.1em;
-    }
-
-    .text-display {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-        margin-bottom: 20px;
-        max-height: 300px;
-        overflow-y: auto;
-        line-height: 1.6;
-        word-wrap: break-word;
-        white-space: pre-wrap;
-    }
-
-    .probability-bars {
-        margin: 30px 0;
-    }
-
-    .prob-item {
-        margin-bottom: 15px;
+    .prob-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
 
     .prob-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 5px;
-        font-weight: 600;
+        min-width: 150px;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .prob-bar-wrapper {
+        flex: 1;
+        height: 50px;
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 2rem;
+        overflow: hidden;
+        position: relative;
     }
 
     .prob-bar {
-        height: 30px;
-        background: #e9ecef;
-        border-radius: 15px;
-        overflow: hidden;
-    }
-
-    .prob-fill {
         height: 100%;
-        transition: width 0.5s ease;
         display: flex;
         align-items: center;
-        padding: 0 15px;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
         color: white;
-        font-weight: 600;
+        transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
 
-    .prob-fill-human {
-        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    .prob-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
     }
 
-    .prob-fill-ai {
-        background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    @keyframes shimmer {
+        to { left: 100%; }
     }
 
-    .features-section {
-        margin-top: 30px;
+    .prob-bar-human { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+    .prob-bar-ai    { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+
+    .prob-value {
+        min-width: 80px;
+        text-align: right;
+        font-weight: 800;
+        font-size: 1.3rem;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    .features-section h3 {
-        margin-bottom: 20px;
-        color: #333;
-    }
+    /* Feature list */
+    .feature-list { display: grid; gap: 1rem; }
 
     .feature-item {
+        background: rgba(15, 23, 42, 0.5);
+        padding: 1.25rem 1.5rem;
+        border-radius: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 15px;
-        background: white;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        border-left: 4px solid #667eea;
+        border-left: 4px solid var(--primary);
+        transition: all 0.3s;
+    }
+
+    .feature-item:hover {
+        background: rgba(15, 23, 42, 0.7);
+        transform: translateX(10px);
     }
 
     .feature-word {
-        font-weight: 600;
-        font-size: 1.1em;
-        color: #333;
+        font-weight: 800;
+        font-size: 1.2rem;
+        font-family: 'Courier New', monospace;
     }
 
-    .feature-contribution {
+    .feature-meta {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 1rem;
     }
 
-    .contribution-badge {
-        padding: 5px 12px;
-        border-radius: 5px;
-        font-size: 0.9em;
-        font-weight: 600;
+    .feature-tag {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
     }
 
-    .contribution-ai {
-        background: #ffe0e6;
-        color: #c33;
-    }
-
-    .contribution-human {
-        background: #e0f4ff;
-        color: #0066cc;
-    }
+    .tag-ai    { background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; }
+    .tag-human { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; }
 
     .feature-weight {
-        font-family: monospace;
-        color: #6c757d;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: var(--gray);
+        min-width: 80px;
+        text-align: right;
     }
 
-    .action-buttons {
-        display: flex;
-        gap: 15px;
-        margin-top: 30px;
-        flex-wrap: wrap;
-    }
-
-    .model-info {
-        background: #e7f3ff;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        border-left: 4px solid #0066cc;
+    /* Light panel for LIME */
+    .lime-panel {
+        /* Fallback */
+        background: rgba(99, 102, 241, 0.08);
+        /* Theme-tinted surface */
+        background: color-mix(in srgb, white 88%, var(--primary) 12%);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        border-radius: 1rem;
+        padding: 1rem;
     }
 
     .lime-frame {
         width: 100%;
-        height: 560px;
+        min-height: 500px;
         border: none;
-        border-radius: 6px;
-        background: #fff;
+        border-radius: 0.75rem;
+        background: transparent;
+    }
+
+    /* Hide old big badge/gradient text if present */
+    .result-badge-large, .confidence-ring { display: none !important; }
+
+    .actions {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 3rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 768px) {
+        .model-tag { min-width: 220px; height: 44px; }
+        .prob-row { flex-direction: column; align-items: stretch; }
+        .prob-label, .prob-value { text-align: left; }
     }
 </style>
 
 {% set is_ai = (result.prediction == 'AI-Generated') %}
 
-<div class="result-container">
-    <div class="model-info">
-        <strong>Model Used:</strong> {{ result.model_name }}
+<div class="results-hero">
+    <!-- Only two pills: prediction + confidence -->
+    <div class="badge-row">
+        <div class="model-tag">{{ '🤖 AI-Generated' if is_ai else '✍️ Human' }}</div>
+        <div class="model-tag">📈 {{ "%.1f"|format(result.confidence) }}% Confidence</div>
     </div>
+</div>
 
-    <div class="result-card">
-        <div class="result-header">
-            <div class="prediction-badge {{ 'badge-ai' if is_ai else 'badge-human' }}">
-                {{ result.prediction }}
-            </div>
-            <div class="confidence-badge">
-                Confidence: {{ "%.2f"|format(result.confidence) }}%
-            </div>
+<div class="card">
+    <h2 class="card-title">
+        <span>🎨</span>
+        <span>Word Analysis</span>
+    </h2>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box" style="background: linear-gradient(135deg, #ec4899, #f43f5e);"></div>
+            <span>AI Indicators</span>
         </div>
-
-        <h3 style="margin-bottom: 15px; color: #333;">Highlighted Text</h3>
-        <div class="text-display">
-            {{ result.highlighted_html|safe }}
-        </div>
-
-        <div class="probability-bars">
-            <h3 style="margin-bottom: 20px; color: #333;">Probability Distribution</h3>
-
-            <div class="prob-item">
-                <div class="prob-label">
-                    <span>Human-Written</span>
-                    <span>{{ "%.2f"|format(result.human_prob) }}%</span>
-                </div>
-                <div class="prob-bar">
-                    <div class="prob-fill prob-fill-human" style="width: {{ result.human_prob }}%">
-                        {% if result.human_prob > 10 %}{{ "%.1f"|format(result.human_prob) }}%{% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="prob-item">
-                <div class="prob-label">
-                    <span>AI-Generated</span>
-                    <span>{{ "%.2f"|format(result.ai_prob) }}%</span>
-                </div>
-                <div class="prob-bar">
-                    <div class="prob-fill prob-fill-ai" style="width: {{ result.ai_prob }}%">
-                        {% if result.ai_prob > 10 %}{{ "%.1f"|format(result.ai_prob) }}%{% endif %}
-                    </div>
-                </div>
-            </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);"></div>
+            <span>Human Indicators</span>
         </div>
     </div>
 
-    <div class="result-card features-section">
-        <h3>Feature Importance (LIME Explanation)</h3>
-        <p style="color: #6c757d; margin-bottom: 20px;">Top 10 tokens or phrases that influenced the AI class score</p>
+    <div class="highlighted-text">
+        {{ result.highlighted_html|safe }}
+    </div>
+</div>
 
+<div class="card">
+    <h2 class="card-title">
+        <span>📊</span>
+        <span>Probability Distribution</span>
+    </h2>
+
+    <div class="prob-container">
+        <div class="prob-row">
+            <div class="prob-label">✍️ Human</div>
+            <div class="prob-bar-wrapper">
+                <div class="prob-bar prob-bar-human" style="width: {{ result.human_prob }}%">
+                    {% if result.human_prob > 10 %}{{ "%.1f"|format(result.human_prob) }}%{% endif %}
+                </div>
+            </div>
+            <div class="prob-value">{{ "%.1f"|format(result.human_prob) }}%</div>
+        </div>
+
+        <div class="prob-row">
+            <div class="prob-label">🤖 AI</div>
+            <div class="prob-bar-wrapper">
+                <div class="prob-bar prob-bar-ai" style="width: {{ result.ai_prob }}%">
+                    {% if result.ai_prob > 10 %}{{ "%.1f"|format(result.ai_prob) }}%{% endif %}
+                </div>
+            </div>
+            <div class="prob-value">{{ "%.1f"|format(result.ai_prob) }}%</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 class="card-title">
+        <span>🔍</span>
+        <span>Top Features (LIME)</span>
+    </h2>
+
+    <div class="feature-list">
         {% for feature in result.features %}
         <div class="feature-item">
-            <span class="feature-word">{{ feature.word }}</span>
-            <div class="feature-contribution">
-                <span class="contribution-badge {% if feature.contribution == 'AI' %}contribution-ai{% else %}contribution-human{% endif %}">
-                    → {{ feature.contribution }}
-                </span>
-                <span class="feature-weight">{{ "%.4f"|format(feature.weight) }}</span>
+            <div class="feature-word">"{{ feature.word }}"</div>
+            <div class="feature-meta">
+                <div class="feature-tag tag-{{ feature.contribution|lower }}">
+                    {{ feature.contribution }}
+                </div>
+                <div class="feature-weight">{{ "%.4f"|format(feature.weight) }}</div>
             </div>
         </div>
         {% endfor %}
     </div>
+</div>
 
-    <div class="result-card">
-        <h3>LIME Interactive Explanation</h3>
-        <p style="color:#6c757d;margin-bottom:12px;">Detailed local explanation for the AI class rendered by LIME</p>
+{% if result.lime_html %}
+<div class="card">
+    <h2 class="card-title">
+        <span>📈</span>
+        <span>Interactive LIME Visualization</span>
+    </h2>
 
-        {% if result.lime_html %}
+    <!-- Light background wrapper for better contrast -->
+    <div class="lime-panel">
         <iframe id="lime-frame" class="lime-frame"></iframe>
-        <script>
-          (function() {
-            // Use tojson so quotes and tags are safely encoded for JS context
-            var html = {{ result.lime_html|tojson|safe }};
-            var frame = document.getElementById('lime-frame');
-            try {
-              if ('srcdoc' in frame) {
-                frame.srcdoc = html;  // modern browsers
-              } else if (frame.contentWindow && frame.contentWindow.document) {
-                // fallback for very old browsers
-                frame.contentWindow.document.open();
-                frame.contentWindow.document.write(html);
-                frame.contentWindow.document.close();
-              }
-            } catch (e) {
-              // ultimate fallback: inline rendering (rarely needed)
-              var fallback = document.createElement('div');
-              fallback.innerHTML = html;
-              frame.replaceWith(fallback);
-            }
-          })();
-        </script>
-        {% else %}
-        <div class="text-display" style="background:#fffbe6;border-left-color:#f0ad4e;">
-            No LIME explanation is available for this input. Try a longer text or adjust num_features. 
-        </div>
-        {% endif %}
     </div>
 
-    <div class="action-buttons">
-        <a href="{{ url_for('index') }}" class="btn btn-primary">Classify Another Text</a>
-        <a href="{{ url_for('batch') }}" class="btn btn-secondary">Batch Prediction</a>
-    </div>
+    <script>
+        (function () {
+            var html = {{ result.lime_html|tojson|safe }};
+            try {
+                // Ensure transparent bg + dark text inside the iframe
+                if (typeof html === 'string') {
+                    var inject = '<style>html,body{background:transparent!important;color:#111!important;}</style>';
+                    if (html.includes('</head>')) {
+                        html = html.replace('</head>', inject + '</head>');
+                    } else {
+                        html = inject + html;
+                    }
+                }
+                var frame = document.getElementById('lime-frame');
+                if ('srcdoc' in frame) {
+                    frame.srcdoc = html;
+                } else if (frame.contentWindow && frame.contentWindow.document) {
+                    frame.contentWindow.document.open();
+                    frame.contentWindow.document.write(html);
+                    frame.contentWindow.document.close();
+                }
+            } catch (e) {
+                var fallback = document.createElement('div');
+                fallback.innerHTML = html;
+                frame.replaceWith(fallback);
+            }
+        })();
+    </script>
+</div>
+{% endif %}
+
+<div class="actions">
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <span>🔄 Analyze Another</span>
+    </a>
+    <a href="{{ url_for('batch') }}" class="btn btn-secondary">
+        <span>📦 Batch Detection</span>
+    </a>
 </div>
 {% endblock %}
