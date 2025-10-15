@@ -231,8 +231,4 @@ pip install --upgrade numpy==2.0.0 scikit-learn==1.5.2
 ### LIME Explanations
 <img src="Images/LIME%20Explainability.png" alt="LIME Explanations" width="500"/>
 
-
-
----
-
 ⭐ If you find this project useful, please consider giving it a star!
